@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="theme-color" content="#0a0a0f"/>
+<title>Exam Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#0a0a0f;--surface:#12121a;--card:#1a1a26;--border:#2a2a3d;--accent:#7c6af7;--accent2:#f74f7c;--green:#4dffa0;--yellow:#ffd94d;--text:#e8e8f0;--muted:#6b6b8a;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overscroll-behavior:none;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;align-items:center;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(124,106,247,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(124,106,247,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.app{width:100%;max-width:480px;min-height:100%;display:flex;flex-direction:column;position:relative;z-index:1;padding-bottom:80px;}
+
+/* Header */
+.header{padding:env(safe-area-inset-top,20px) 20px 16px;padding-top:calc(env(safe-area-inset-top,0px) + 20px);border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(124,106,247,0.08),transparent);}
+.header-tag{font-family:'Space Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:3px;margin-bottom:4px;}
+.header-title{font-size:22px;font-weight:700;display:flex;align-items:center;gap:10px;}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.8);}}
+
+/* Tabs */
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:12px 16px 0;background:var(--card);border-radius:14px;padding:4px;border:1px solid var(--border);}
+.tab{padding:11px;border:none;background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;border-radius:10px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:6px;}
+.tab.active{background:var(--accent);color:white;box-shadow:0 4px 14px rgba(124,106,247,0.4);}
+
+/* Content */
+.content{padding:14px 16px;flex:1;display:flex;flex-direction:column;gap:12px;}
+.panel{display:none;flex-direction:column;gap:12px;}
+.panel.active{display:flex;}
+
+/* Status */
+.status-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:12px;font-family:'Space Mono',monospace;font-size:11px;}
+.sdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.sdot.green{background:var(--green);box-shadow:0 0 6px var(--green);}
+.sdot.yellow{background:var(--yellow);}
+.sdot.red{background:var(--accent2);}
+
+/* Big record button */
+.record-section{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:24px 16px;display:flex;flex-direction:column;align-items:center;gap:16px;}
+.waveform{display:flex;align-items:center;gap:3px;height:32px;}
+.wbar{width:3px;background:var(--accent);border-radius:2px;height:4px;transition:height 0.12s ease;}
+.record-btn{width:88px;height:88px;border-radius:50%;border:3px solid var(--accent);background:rgba(124,106,247,0.12);color:white;font-size:32px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;position:relative;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.record-btn:active{transform:scale(0.95);}
+.record-btn.rec{border-color:var(--accent2);background:rgba(247,79,124,0.15);animation:rpulse 1s infinite;}
+@keyframes rpulse{0%,100%{box-shadow:0 0 0 0 rgba(247,79,124,0.5);}50%{box-shadow:0 0 0 18px rgba(247,79,124,0);}}
+.rec-label{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);text-align:center;}
+.rec-label.live{color:var(--accent2);}
+
+/* Transcript */
+.transcript{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:14px;color:var(--muted);font-style:italic;min-height:64px;line-height:1.7;outline:none;width:100%;}
+.transcript.filled{color:var(--text);font-style:normal;border-color:rgba(124,106,247,0.35);}
+.edit-hint{text-align:right;font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;cursor:pointer;}
+.edit-hint span{color:var(--accent);text-decoration:underline;}
+
+/* Upload */
+.upload-zone{border:2px dashed var(--border);border-radius:16px;padding:32px 16px;text-align:center;cursor:pointer;transition:all 0.2s;touch-action:manipulation;}
+.upload-zone.filled{border-style:solid;border-color:var(--accent);padding:0;border-radius:14px;overflow:hidden;}
+.upload-zone.filled img{width:100%;display:block;max-height:260px;object-fit:contain;}
+.uz-icon{font-size:36px;margin-bottom:10px;}
+.uz-text{color:var(--muted);font-size:14px;}
+.uz-hint{color:var(--accent);font-size:11px;margin-top:6px;font-family:'Space Mono',monospace;}
+
+/* Answer */
+.answer-card{background:linear-gradient(135deg,rgba(77,255,160,0.06),rgba(124,106,247,0.06));border:1px solid rgba(77,255,160,0.25);border-radius:18px;padding:18px;}
+.answer-lbl{display:flex;align-items:center;gap:8px;font-family:'Space Mono',monospace;font-size:10px;color:var(--green);letter-spacing:2px;margin-bottom:14px;}
+.answer-lbl::before{content:'';width:6px;height:6px;background:var(--green);border-radius:50%;box-shadow:0 0 6px var(--green);}
+.aitem{padding:12px 14px;margin-bottom:8px;background:rgba(255,255,255,0.04);border-left:3px solid var(--green);border-radius:0 10px 10px 0;}
+.aitem:last-child{margin-bottom:0;}
+.anum{font-family:'Space Mono',monospace;font-size:10px;color:var(--green);margin-bottom:4px;}
+.aans{color:var(--text);font-weight:500;font-size:15px;line-height:1.65;}
+.aexp{color:var(--muted);font-size:12px;margin-top:5px;line-height:1.6;}
+
+/* Loading */
+.loading{display:flex;flex-direction:column;align-items:center;gap:14px;padding:22px;}
+.ldots{display:flex;gap:7px;}
+.ldot{width:9px;height:9px;border-radius:50%;animation:ld 1.2s ease-in-out infinite;}
+.ldot:nth-child(1){background:var(--accent);}
+.ldot:nth-child(2){background:var(--accent2);animation-delay:.2s;}
+.ldot:nth-child(3){background:var(--green);animation-delay:.4s;}
+@keyframes ld{0%,80%,100%{transform:scale(0.5);opacity:0.3;}40%{transform:scale(1);opacity:1;}}
+.ltxt{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:2px;}
+
+/* Button */
+.btn{width:100%;padding:17px;border:none;border-radius:16px;background:linear-gradient(135deg,var(--accent),#5b4de8);color:white;font-family:'DM Sans',sans-serif;font-weight:700;font-size:16px;cursor:pointer;transition:all 0.15s;box-shadow:0 8px 24px rgba(124,106,247,0.3);touch-action:manipulation;}
+.btn:active:not(:disabled){transform:scale(0.98);}
+.btn:disabled{opacity:0.35;cursor:not-allowed;}
+
+.errbox{background:rgba(247,79,124,0.08);border:1px solid rgba(247,79,124,0.3);border-radius:12px;padding:14px;color:var(--accent2);font-size:13px;line-height:1.6;}
+.tip{background:rgba(77,255,160,0.04);border-left:3px solid rgba(77,255,160,0.3);padding:10px 13px;border-radius:0 10px 10px 0;font-size:12px;color:var(--muted);line-height:1.7;}
+
+/* History */
+.hitem{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px;}
+.hmeta{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.htype{font-family:'Space Mono',monospace;font-size:10px;padding:3px 9px;border-radius:20px;background:rgba(124,106,247,0.15);color:var(--accent);}
+.htype.visual{background:rgba(247,79,124,0.15);color:var(--accent2);}
+.htime{font-size:11px;color:var(--muted);}
+.hprev{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* Bottom nav */
+.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:rgba(10,10,15,0.96);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr 1fr;padding-bottom:env(safe-area-inset-bottom,0px);z-index:100;}
+.nbtn{padding:12px 8px 10px;border:none;background:transparent;color:var(--muted);font-size:10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:'DM Sans',sans-serif;touch-action:manipulation;}
+.nbtn.active{color:var(--accent);}
+.nbtn .ni{font-size:22px;}
+
+.hidden{display:none!important;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-tag">AI EXAM ASSISTANT</div>
+    <div class="header-title"><div class="dot"></div>English B1</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('listen')">🎙️ Listening</button>
+    <button class="tab" onclick="switchTab('visual')">📷 Visual</button>
+  </div>
+
+  <div class="content">
+
+    <!-- LISTENING PANEL -->
+    <div class="panel active" id="panel-listen">
+
+      <div class="status-bar" id="statusBar">
+        <div class="sdot yellow" id="sdot"></div>
+        <span id="stxt" style="color:var(--muted)">Checking microphone...</span>
+      </div>
+
+      <div class="record-section">
+        <div class="waveform" id="waveform"></div>
+        <button class="record-btn" id="recBtn" onclick="toggleRec()">
+          <span id="recIcon">🎤</span>
+        </button>
+        <div class="rec-label" id="recLabel">Tap to record</div>
+      </div>
+
+      <div class="transcript" id="transcript">Spoken text will appear here...</div>
+      <div class="edit-hint" onclick="makeEditable()">✏️ <span>type manually</span></div>
+
+      <div class="tip">💡 Press 🎤 → hold phone near speaker → press ⏹ to stop → Claude gives a B1 answer</div>
+
+      <button class="btn" id="listenBtn" onclick="answerListening()" disabled>✨ Generate B1 Answer</button>
+
+      <div id="listenLoading" class="hidden">
+        <div class="loading"><div class="ldots"><div class="ldot"></div><div class="ldot"></div><div class="ldot"></div></div><div class="ltxt">THINKING...</div></div>
+      </div>
+      <div id="listenAnswer" class="hidden answer-card"><div class="answer-lbl">AI ANSWER — B1</div><div id="listenAnswerText"></div></div>
+      <div id="listenError" class="hidden errbox"></div>
+    </div>
+
+    <!-- VISUAL PANEL -->
+    <div class="panel" id="panel-visual">
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('imgInput').click()">
+        <div class="uz-icon">📄</div>
+        <div class="uz-text">Tap to photograph question paper</div>
+        <div class="uz-hint">or choose from gallery</div>
+        <img id="previewImg" style="display:none"/>
+      </div>
+      <input type="file" id="imgInput" accept="image/*" capture="environment" style="display:none" onchange="handleImg(event)"/>
+
+      <div class="tip">💡 Take a clear photo of the exam paper. Multiple questions in one photo work fine.</div>
+
+      <button class="btn" id="visualBtn" onclick="answerVisual()" disabled>✨ Read & Answer</button>
+
+      <div id="visualLoading" class="hidden">
+        <div class="loading"><div class="ldots"><div class="ldot"></div><div class="ldot"></div><div class="ldot"></div></div><div class="ltxt">READING...</div></div>
+      </div>
+      <div id="visualAnswer" class="hidden answer-card"><div class="answer-lbl">AI ANSWERS — B1</div><div id="visualAnswerText"></div></div>
+      <div id="visualError" class="hidden errbox"></div>
+    </div>
+
+    <!-- HISTORY PANEL -->
+    <div class="panel" id="panel-history">
+      <div id="historyList"><div style="color:var(--muted);font-size:13px;text-align:center;padding:40px 0">No history yet.</div></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="bnav">
+  <button class="nbtn active" id="nb-listen" onclick="switchNav('listen')"><span class="ni">🎙️</span>Listen</button>
+  <button class="nbtn" id="nb-visual" onclick="switchNav('visual')"><span class="ni">📷</span>Visual</button>
+  <button class="nbtn" id="nb-history" onclick="switchNav('history')"><span class="ni">📋</span>History</button>
+</div>
+
+<script>
+// ── CONFIG — API KEY BURAYA ────────────────────────────────────
+const API_KEY = 'BURAYA_API_KEY_YAZIN';
+// ─────────────────────────────────────────────────────────────
+
+let recognition = null;
+let isRecording = false;
+let transcriptText = '';
+let imageB64 = '';
+let history = JSON.parse(localStorage.getItem('xhist') || '[]');
+let waveTimer = null;
+
+// ── WAVEFORM ──────────────────────────────────────────────────
+const wf = document.getElementById('waveform');
+const bars = [];
+for(let i = 0; i < 24; i++){
+  const b = document.createElement('div');
+  b.className = 'wbar';
+  wf.appendChild(b);
+  bars.push(b);
+}
+function animateBars(on){
+  clearInterval(waveTimer);
+  if(on){
+    waveTimer = setInterval(()=>{
+      bars.forEach(b=>{
+        b.style.height = (Math.random()*24+3)+'px';
+        b.style.background = Math.random()>.75 ? 'var(--accent2)' : 'var(--accent)';
+      });
+    },110);
+  } else {
+    bars.forEach(b=>{ b.style.height='4px'; b.style.background='var(--accent)'; });
+  }
+}
+
+// ── SPEECH INIT ───────────────────────────────────────────────
+function initSpeech(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){
+    setStatus('red','❌ Use Chrome browser for mic support');
+    makeEditable();
+    return;
+  }
+  recognition = new SR();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = 'en-US';
+
+  recognition.onstart = ()=> setStatus('green','🎙 Listening — speak now');
+
+  recognition.onresult = (e)=>{
+    let final='', interim='';
+    for(let i=0;i<e.results.length;i++){
+      if(e.results[i].isFinal) final += e.results[i][0].transcript+' ';
+      else interim += e.results[i][0].transcript;
+    }
+    const txt = (final+interim).trim();
+    if(txt){
+      const box = document.getElementById('transcript');
+      box.textContent = txt;
+      box.classList.add('filled');
+      transcriptText = final.trim() || txt;
+      document.getElementById('listenBtn').disabled = false;
+    }
+  };
+
+  recognition.onerror = (e)=>{
+    if(e.error==='not-allowed'){
+      setStatus('red','❌ Mic blocked — allow permission and reload');
+      makeEditable();
+    } else if(e.error==='network'){
+      setStatus('red','❌ Network error — needs HTTPS or localhost');
+    } else if(e.error!=='aborted'&&e.error!=='no-speech'){
+      setStatus('yellow','⚠️ '+e.error);
+    }
+    stopRecUI();
+  };
+
+  recognition.onend = ()=>{
+    if(isRecording){ try{ recognition.start(); }catch(e){} }
+    else {
+      stopRecUI();
+      if(transcriptText) setStatus('green','✅ Done — tap "Generate Answer"');
+      else setStatus('yellow','⚠️ No speech detected — try again');
+    }
+  };
+
+  setStatus('green','✅ Ready — press 🎤 to record');
+}
+
+function setStatus(color, text){
+  document.getElementById('sdot').className = 'sdot '+color;
+  document.getElementById('stxt').textContent = text;
+}
+
+// ── RECORD ────────────────────────────────────────────────────
+function toggleRec(){
+  if(!recognition){ makeEditable(); document.getElementById('transcript').focus(); return; }
+  if(isRecording){
+    isRecording = false;
+    recognition.stop();
+    stopRecUI();
+  } else {
+    isRecording = true;
+    transcriptText = '';
+    document.getElementById('listenBtn').disabled = true;
+    hide('listenAnswer'); hide('listenError');
+    const box = document.getElementById('transcript');
+    box.textContent = 'Listening...';
+    box.classList.remove('filled');
+    document.getElementById('recBtn').classList.add('rec');
+    document.getElementById('recIcon').textContent = '⏹';
+    document.getElementById('recLabel').textContent = 'Recording... tap to stop';
+    document.getElementById('recLabel').classList.add('live');
+    animateBars(true);
+    try{ recognition.start(); }catch(e){}
+  }
+}
+
+function stopRecUI(){
+  document.getElementById('recBtn').classList.remove('rec');
+  document.getElementById('recIcon').textContent = '🎤';
+  document.getElementById('recLabel').textContent = 'Tap to record again';
+  document.getElementById('recLabel').classList.remove('live');
+  animateBars(false);
+  isRecording = false;
+}
+
+function makeEditable(){
+  const box = document.getElementById('transcript');
+  if(box.contentEditable === 'true') return;
+  box.contentEditable = 'true';
+  box.textContent = '';
+  box.classList.remove('filled');
+  box.style.borderColor = 'var(--accent)';
+  box.addEventListener('input', ()=>{
+    transcriptText = box.textContent.trim();
+    document.getElementById('listenBtn').disabled = !transcriptText;
+    box.classList.toggle('filled', !!transcriptText);
+  });
+}
+
+// ── IMAGE ─────────────────────────────────────────────────────
+function handleImg(e){
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    const url = ev.target.result;
+    imageB64 = url.split(',')[1];
+    const zone = document.getElementById('uploadZone');
+    zone.classList.add('filled');
+    zone.querySelectorAll('.uz-icon,.uz-text,.uz-hint').forEach(el=>el.style.display='none');
+    const img = document.getElementById('previewImg');
+    img.src=url; img.style.display='block';
+    document.getElementById('visualBtn').disabled=false;
+    hide('visualAnswer'); hide('visualError');
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── CLAUDE ────────────────────────────────────────────────────
+const SYS = `You are an English exam assistant for a B1 level student.
+- Answer in SIMPLE, CLEAR English (short sentences, everyday words)
+- For multiple questions: label Q1:, Q2: etc, then give each answer
+- Be concise and direct. No complex vocabulary.`;
+
+async function callClaude(messages){
+  const r = await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':API_KEY,'anthropic-version':'2023-06-01'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:700,system:SYS,messages})
+  });
+  const d = await r.json();
+  if(d.error) throw new Error(d.error.message);
+  return d.content[0].text;
+}
+
+async function answerListening(){
+  if(!transcriptText) return;
+  show('listenLoading'); hide('listenAnswer'); hide('listenError');
+  document.getElementById('listenBtn').disabled=true;
+  try{
+    const ans = await callClaude([{role:'user',content:`English listening exam question:\n\n"${transcriptText}"\n\nAnswer at B1 level.`}]);
+    document.getElementById('listenAnswerText').innerHTML = fmt(ans);
+    show('listenAnswer');
+    saveHist('listening',transcriptText,ans);
+  }catch(err){ showErr('listen',err.message); }
+  finally{ hide('listenLoading'); document.getElementById('listenBtn').disabled=false; }
+}
+
+async function answerVisual(){
+  if(!imageB64) return;
+  show('visualLoading'); hide('visualAnswer'); hide('visualError');
+  document.getElementById('visualBtn').disabled=true;
+  try{
+    const ans = await callClaude([{role:'user',content:[
+      {type:'image',source:{type:'base64',media_type:'image/jpeg',data:imageB64}},
+      {type:'text',text:'Read all questions in this exam paper and answer each one at B1 level. Number your answers Q1:, Q2: etc.'}
+    ]}]);
+    document.getElementById('visualAnswerText').innerHTML = fmt(ans);
+    show('visualAnswer');
+    saveHist('visual','[image]',ans);
+  }catch(err){ showErr('visual',err.message); }
+  finally{ hide('visualLoading'); document.getElementById('visualBtn').disabled=false; }
+}
+
+// ── FORMAT ────────────────────────────────────────────────────
+function fmt(text){
+  const lines = text.split('\n').filter(l=>l.trim());
+  let html='', cur=null;
+  for(const line of lines){
+    const m = line.match(/^(Q\d+[:.)]?)\s*/i);
+    if(m){ if(cur) html+=bQ(cur); cur={num:m[1].replace(/[:.)]/, ''),ans:line.replace(m[0],''),exp:''}; }
+    else if(cur){ cur.exp+=(cur.exp?' ':'')+line; }
+    else{ return `<div style="font-size:15px;line-height:1.8;color:var(--text)">${text.replace(/\n/g,'<br/>')}</div>`; }
+  }
+  if(cur) html+=bQ(cur);
+  return html||`<div style="font-size:15px;line-height:1.8">${text.replace(/\n/g,'<br/>')}</div>`;
+}
+function bQ(q){
+  return `<div class="aitem"><div class="anum">QUESTION ${q.num}</div><div class="aans">${q.ans}</div>${q.exp?`<div class="aexp">${q.exp}</div>`:''}</div>`;
+}
+
+// ── HISTORY ───────────────────────────────────────────────────
+function saveHist(type,q,a){
+  history.unshift({type,q:q.slice(0,80),t:new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})});
+  if(history.length>30) history.pop();
+  localStorage.setItem('xhist',JSON.stringify(history));
+}
+function renderHist(){
+  const el=document.getElementById('historyList');
+  if(!history.length){el.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:40px 0">No history yet.</div>';return;}
+  el.innerHTML=history.map(h=>`<div class="hitem"><div class="hmeta"><span class="htype ${h.type}">${h.type==='listening'?'🎙 Listening':'📷 Visual'}</span><span class="htime">${h.t}</span></div><div class="hprev">${h.q}</div></div>`).join('');
+}
+
+// ── NAV ───────────────────────────────────────────────────────
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',(t==='listen'&&i===0)||(t==='visual'&&i===1)));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+t).classList.add('active');
+}
+function switchNav(n){
+  document.querySelectorAll('.nbtn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('nb-'+n).classList.add('active');
+  if(n==='history'){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.getElementById('panel-history').classList.add('active');renderHist();}
+  else switchTab(n);
+}
+
+function show(id){document.getElementById(id).classList.remove('hidden');}
+function hide(id){document.getElementById(id).classList.add('hidden');}
+function showErr(mode,msg){const el=document.getElementById(mode+'Error');el.textContent='⚠️ '+msg;el.classList.remove('hidden');}
+
+// ── INIT ──────────────────────────────────────────────────────
+initSpeech();
+</script>
+</body>
+</html>
